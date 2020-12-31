@@ -1,0 +1,191 @@
+
+
+paso 1
+
+creamos nuestra carpeta, la abremos con visual studio code y ejecutamos el comando
+npm init para inicializar el proyecto
+
+
+
+paso 2
+una vez hecho eso comenzamos con la instalaccion de express
+npm install --save express
+
+paso 3 
+intalar body parse que nos permite trabajar con objetos json
+npm install --save body-parser
+
+paso 4
+instalamos moongose para trabajar con mongo db 
+npm install --save mongoose
+
+paso 5
+instalamos node mon para que nustros cambios se reflejen sin tener que reiniciar el servicio
+npm install --save nodemon
+modificar package.json en la seccion scripts
+agregar la siguiente linea
+"start": "nodemon index.js",
+
+paso 6 creamos el archivo app.js con la siguient estructura
+
+'use strict'
+
+//Cargar Modulos de node para crear el servidor
+var express = require('express');
+var bodyParser = require('body-parser');
+
+//Ejecutar express(http
+var app = express();
+
+
+
+//Cargas Middlewares
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+
+module.exports = app;
+
+paso 7 
+
+creamos nuetro archivo de base de datos
+
+'use strict'
+
+var mongoose = require('mongoose');
+var app = require('./app');
+var port = 3900;
+
+mongoose.set('useFindAndModify', false);
+mongoose.Promise = global.Promise();
+mongoose.connect('mongodb://localhost:27017/api_rest_vessel', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log("Conectado Correctamente a la base de datos");
+
+        //Crea Servidor web que escucha peticiones http
+        app.listen(port, () => {
+            console.log("Servidor Corriendo en http://localhost:" + port);
+        });
+    });
+	
+paso 8
+
+creamos nuetro modelo en este caso como sera una api rest de informacion de naves mercantes nuestro modelo sera mas o menos asi
+
+'use strict'
+
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+var VesselSchema = Schema({
+    name: String,
+    imo: Number,
+    mmsi: Number,
+    type: String,
+    flag: String,
+    grossTonage: Number,
+    deadWeight: Number,
+    builtYear: Number,
+    length: Number,
+    beam: Number,
+    draft: Number,
+    oldNames: { type: Array, default: [] },
+    image: String,
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Vessel', VesselSchema);
+
+
+
+paso 9
+
+cramos nuestro contoller
+
+'use strict'
+
+
+var Vessel = require('../models/article');
+
+var controller = {
+
+    getVessels: (req, res) => {
+        var query = Vessel.find({});
+
+        query.exec((err, vessels) => {
+
+            if (err) {
+                return res.status(500).send({
+                    status: 'error',
+                    message: 'Error al devolver las Naves'
+                });
+
+            }
+
+            if (!vessels) {
+                return res.status(200).send({
+                    status: 'OK',
+                    message: 'No existen Naves para Mostrar'
+                });
+            }
+
+            return res.status(200).send({
+                status: 'success',
+                vessels
+            });
+
+        });
+
+    }
+
+}
+
+module.exports = controller;
+
+y para poder tener algun dato que mostrar insertamos un dato de prueba
+
+ db.vessels.insertOne({name: "MSC BIANCA", imo: 9770749, mmsi: 636019021, type: "CONTAINER SHIP", flag: "LIBERIA", grossTonage: 112695, deadWeight: 128432, builtYear: 2019, length: 328.46, beam: 48.39, draft: 11.7 , oldNames: null,image: "https://cdn.vesseltracker.com/midres/1788220.jpg", createdAt: new Date(Date.now()) });
+ 
+paso 10 creamos nuestro archivo de rutas middleware
+
+'use strict'
+
+var express = require('express');
+var VesselController = require('../controller/vessel');
+var router = express.Router();
+
+router.get('/get-vessels', VesselController.getVessels);
+
+module.exports = router;
+
+
+
+paso 11 volvemos a nuestro archivo app.js para agregar el router que creamos anteriormente
+
+lo dejamos asi se agrego la variable router, y la agreamos para usar la api
+
+'use strict'
+
+//Cargar Modulos de node para crear el servidor
+var express = require('express');
+var bodyParser = require('body-parser');
+
+//Ejecutar express(http
+var app = express();
+
+//Cargar ficheros rutas
+var vessels_router = require('./routes/vessel');
+
+//Cargas Middlewares
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+app.use('/api', vessels_router);
+
+module.exports = app;
+ 
+ 
+ vamos a agregar la creacion de token de autenficacion mediante un middleware
+ moment
+jwt-simple
+ npm i bcrypt
+ npm i bcrypt-nodejs
